@@ -1,0 +1,19 @@
+# Data directories
+data/
+SNIST/
+
+# Model training checkpoints (intermediate files)
+*checkpoint.pt
+
+# Virtual environment & secret keys
+.env
+.env.*
+.venv/
+venv/
+
+# Python cache & Jupyter
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
