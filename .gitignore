@@ -1,9 +1,25 @@
+# Older / backup files
+old_*
+**/old_*
+
 # Data directories
 data/
 SNIST/
 
-# Model training checkpoints (intermediate files)
+# Model training checkpoints & large experiment artifacts (generated when RUN_TRAINING = True)
 *checkpoint.pt
+results/nb4_experiments/checkpoints/
+**/nb4_experiments/checkpoints/
+results/**/checkpoints/
+
+# Large data bundles (~95 MB, only used by legacy ablation; not needed for nb3/nb4)
+results/**/ablation_frozen_bundle.npz
+**/ablation_frozen_bundle.npz
+*.bundle.npz
+
+# Legacy ablation results
+results/mobil_openfwi_ablation/
+**/mobil_openfwi_ablation/
 
 # Virtual environment & secret keys
 .env

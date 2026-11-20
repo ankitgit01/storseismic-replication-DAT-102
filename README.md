@@ -1,89 +1,62 @@
-# StorSeismic Replication (DAT-102 Course Project)
+# StorSeismic: Reproduction & Extended Experiments
 
-Replication of **StorSeismic** (*Harsuko & Alkhalifah, 2022*), a BERT-based self-supervised pre-training and fine-tuning framework for seismic data processing, built as a course project for **DAT-102** at IIT Roorkee.
+PyTorch reproduction and extension of **StorSeismic** (*Harsuko & Alkhalifah, 2022*) for self-supervised seismic pre-training and downstream processing using **OpenFWI** (synthetic) and **Mobil AVO Viking Graben Line 12** (field) data.
 
-Original repository: [swag-kaust/storseismic](https://github.com/swag-kaust/storseismic)
-
----
-
-## Overview
-
-StorSeismic adapts the BERT masked language modeling architecture (`transformers.BertForMaskedLM`) to continuous seismic shot gathers by treating each seismic trace as a token and using Pre-LayerNorm (`Pre-LN`) transformer blocks:
-
-1. **Data Preparation (`nb0_1`, `nb0_2`)**: Generates masked pre-training shot gathers and downstream fine-tuning datasets from the [SNIST](https://github.com/LukasMosser/SNIST) synthetic seismic benchmark.
-2. **Self-Supervised Pre-Training (`nb1_pretraining.ipynb`)**: Trains a 4-layer Pre-LN BERT model with `RAdam` and MSE loss on masked traces to reconstruct missing seismic waveforms.
-3. **Downstream Fine-Tuning (`nb2_1`, `nb2_2`)**: Fine-tunes the pre-trained backbone for **seismic denoising** and **1D velocity estimation**.
+📄 **Full Project Report:** [Link to Report](./report.pdf) *(see report for methodology, detailed analysis, and all figures)*
 
 ---
 
 ## Repository Structure
 
 ```text
-├── storseismic/
-│   ├── modules.py          # Custom BertEmbeddings, BertSelfAttention, PreLNBert*, and task heads
-│   ├── train.py            # Pre-training and fine-tuning loops
-│   ├── utils.py            # SSDataset and SNISTMLM PyTorch Dataset classes
-│   └── pytorchtools.py     # EarlyStopping utility
-├── nb0_1_data_prep_pretrain.ipynb
-├── nb0_2_data_prep_finetune.ipynb
-├── nb1_pretraining.ipynb
-├── nb2_1_finetuning_denoising.ipynb
-├── nb2_2_finetuning_velpred.ipynb
-├── data/                   # Generated pre-train and fine-tune .pt datasets
-└── results/                # Saved model checkpoints and training/validation loss arrays
+storseismic/
+├── data/
+│   ├── mobil/seismic.segy            # Mobil AVO Line 12 field gathers
+│   └── openfwi/
+│       ├── data1.npy                 # OpenFWI synthetic shot gathers
+│       └── model1.npy                # OpenFWI 2D velocity models
+├── nb3_mobil_openfwi_section4.ipynb  # Stage 1 pre-training + Stage 2 denoising & velocity fine-tuning
+├── nb4_storseismic_experiments.ipynb # Ablations (A1, A2, A3, A5), zero-shot interpolation (B2), attention maps (B5)
+└── results/
+    ├── mobil_openfwi_section4/       # Saved nb3 checkpoints & training history
+    └── nb4_experiments/              # Saved nb4 checkpoints, JSON metrics & 300-DPI figures
 ```
 
 ---
 
-## Environment Setup (Windows + CUDA)
+## Setup
 
-This replication was run locally in **VS Code** using **Python 3.10** (required for prebuilt `tokenizers==0.12.1` wheels compatible with `transformers==4.20.1`) and **PyTorch 2.7.1 + CUDA 12.8** for RTX 50-series (Blackwell) GPU support.
+Requires **Python 3.10+** and a CUDA-enabled GPU (tested with PyTorch 2.5+ / CUDA 12.1).
 
-### 1. Clone the repository
+```bash
+# Using uv (recommended)
+uv venv --python 3.10
+uv pip install torch numpy scipy segyio matplotlib jupyter
 
-```powershell
-git clone https://github.com/swag-kaust/storseismic.git
-cd storseismic
-```
-
-### 2. Create a Python 3.10 virtual environment with `uv`
-
-```powershell
-uv venv --python 3.10 .venv
-.\.venv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-```powershell
-uv pip install torch==2.7.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-uv pip install transformers==4.20.1 numpy==1.26.4 pandas matplotlib tqdm scipy scikit-learn ipykernel
-uv pip install git+https://github.com/LiyuanLucasLiu/RAdam
-uv pip install git+https://github.com/LukasMosser/SNIST.git
+# Or using pip
+pip install torch numpy scipy segyio matplotlib jupyter
 ```
 
 ---
 
-## Reproducing the Workflow
+## Usage
 
-Run the notebooks sequentially using the `.venv` (Python 3.10) kernel:
+1. **Main Pipeline (`nb3_mobil_openfwi_section4.ipynb`):**
+   - Set `RUN_TRAINING = True` on the first run to pre-train (`BERT_MINI`, 50/50 OpenFWI + Mobil) and fine-tune for Denoising and 1D Velocity Prediction.
+   - Set `RUN_TRAINING = False` afterwards to reload saved checkpoints and regenerate plots without re-training.
 
-1. `nb0_1_data_prep_pretrain.ipynb` — Creates `./data/pretrain/train_data.pt` and `test_data.pt`.
-2. `nb0_2_data_prep_finetune.ipynb` — Creates `./data/finetune/` datasets.
-3. `nb1_pretraining.ipynb` — Pre-trains the StorSeismic model and saves checkpoints to `./results/pretrain/`.
-4. `nb2_1_finetuning_denoising.ipynb` — Fine-tunes the pre-trained model for seismic denoising.
-5. `nb2_2_finetuning_velpred.ipynb` — Fine-tunes the pre-trained model for velocity prediction.
-
-### Compatibility Notes (PyTorch 2.6+ & VS Code)
-
-Two minimal updates were applied to the original notebooks for modern PyTorch and VS Code execution:
-- **`torch.load(..., weights_only=False)`**: Required in PyTorch 2.6+ when loading pickled `SSDataset` and full `BertForMaskedLM` checkpoint files (`train_data.pt`, `test_data.pt`, `starting_model.pt`, `model.pt`).
-- **`%matplotlib inline`**: Replaced `%matplotlib notebook` in the training loss plot cells for compatibility with VS Code's notebook renderer.
+2. **Extended Experiments (`nb4_storseismic_experiments.ipynb`):**
+   - Automatically reuses `nb3` checkpoints and caches all ablation checkpoints/metrics under `results/nb4_experiments/`.
+   - Covers:
+     - **A1:** Pre-training vs. From-Scratch sample efficiency (10%–100% labels)
+     - **A2:** Partial layer freezing sweep (`0`–`4` frozen layers)
+     - **A3:** Pre-training data mix ablation (100% OpenFWI vs. 50/50 Mixed vs. 100% Mobil)
+     - **A5:** Model capacity scaling (`BERT_TINY`, `BERT_MINI`, `BERT_SMALL`)
+     - **B2:** Zero-shot Mobil dead-trace interpolation vs. Linear/Cubic baselines
+     - **B5:** Layer-wise self-attention map interpretability
 
 ---
 
-## References
+## Reference
 
-- Harsuko, R., & Alkhalifah, T. A. (2022). *StorSeismic: A new paradigm in deep learning for seismic processing.* IEEE Transactions on Geoscience and Remote Sensing, 60, 1–15.
-- Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2018). *BERT: Pre-training of deep bidirectional transformers for language understanding.* arXiv:1810.04805.
-- Xiong, R., et al. (2020). *On layer normalization in the transformer architecture.* ICML, 10524–10533.
+- Harsuko, R., & Alkhalifah, T. A. (2022). *StorSeismic: A New Paradigm in Deep Learning for Seismic Processing*. IEEE Transactions on Geoscience and Remote Sensing.
