@@ -1,0 +1,21 @@
+{
+  "SEED": 42,
+  "N_TRACES": 70,
+  "N_TIME": 256,
+  "HIDDEN_DIM": 256,
+  "NUM_LAYERS": 4,
+  "NUM_HEADS": 4,
+  "MASK_RATIO": 0.15,
+  "LR": 0.0005,
+  "PRETRAIN_EPOCHS": 300,
+  "FINETUNE_DENOISE_EPOCHS": 250,
+  "FINETUNE_VEL_EPOCHS": 250,
+  "VEL_MIN": 1503.0,
+  "VEL_MAX": 4478.39990234375,
+  "sample_idx": 5,
+  "pretrain_ckpt": "./results/mobil_openfwi_section4\\storseismic_pretrained_mixed.pt",
+  "denoise_ckpt_frozen": "./results/mobil_openfwi_section4\\storseismic_finetuned_denoise.pt",
+  "vel_ckpt_frozen": "./results/mobil_openfwi_section4\\storseismic_finetuned_velpred.pt",
+  "frozen_test_denoise_mse": 4.4515414629131556e-05,
+  "frozen_test_vel_mae_ms": 307.0330810546875
+}
